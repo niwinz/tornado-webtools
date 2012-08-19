@@ -16,6 +16,8 @@ class Application(tornado.web.Application):
 
         self._setup_database_engine()
         self._setup_template_engine()
+        self._setup_session_engine()
+        self._setup_authentication_engine()
 
     def _setup_handlers(self, handlers):
         return [(x, load_class(y)) for x,y in handlers]
@@ -48,9 +50,15 @@ class Application(tornado.web.Application):
         self._jinja_env = Environment(loader=ChoiceLoader(loaders), **jinja_settings)
 
 
+    # Session methods
+
+    def _setup_session_engine(self):
+        pass
+
+
     # Authentication methods
 
-    def _setup_auth_backends(self):
+    def _setup_authentication_engine(self):
         assert "auth_backends" in self.settings, "auth_backends settings is not defined"
         assert isinstance(self.settings['auth_backends'], (tuple, list)), \
             "auth_backends must be a list or tuple"

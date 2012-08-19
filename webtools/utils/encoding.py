@@ -10,3 +10,15 @@ def smart_bytes(value, encoding='utf-8', errors='strict'):
         value = str(value)
 
     return value.encode(encoding, errors)
+
+def smart_text(value, encoding="utf-8", errors="strict"):
+    if isinstance(value, str):
+        if encoding == "utf-8":
+            return value
+
+        return value.encode('utf-8', errors).decode(encoding, errors)
+
+    if not isinstance(value, bytes):
+        return str(value)
+
+    return value.decode(encoding, errors)

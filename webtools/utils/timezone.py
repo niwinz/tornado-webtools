@@ -43,6 +43,7 @@ def deactivate():
     if hasattr(_active, "value"):
         del _active.value
 
+
 def as_localtime(value, timezone=None):
     if timezone is None:
         timezone = get_current_timezone()
