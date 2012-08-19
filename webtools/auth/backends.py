@@ -1,6 +1,4 @@
 
-from
-
 class BaseAuthenticationBackend(object):
     def __init__(self, application):
         self.application = application

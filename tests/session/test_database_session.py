@@ -14,6 +14,10 @@ class DatabaseSessionTest(unittest.TestCase):
         cls.app = Application(settings_module="tests.settings.TestOverwriteSettings")
         Base.metadata.create_all(cls.app.engine)
 
+    @classmethod
+    def tearDownClass(cls):
+        Base.metadata.drop_all(cls.app.engine)
+
     def test_load(self):
         self.app.session_engine.load()
 
