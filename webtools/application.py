@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import tornado.web
-from .utils.imp import load_class
 import copy
 
-DEFAULT_SESSION_ENGINE = 'webtools.session.backend.database.DatabaseEngine'
+from .utils.imp import load_class
+
 
 
 class Application(tornado.web.Application):
@@ -25,7 +25,7 @@ class Application(tornado.web.Application):
         self._setup_database_engine()
         self._setup_template_engine()
         self._setup_session_engine()
-        #self._setup_authentication_engine()
+        self._setup_authentication_engine()
 
     def _setup_handlers(self, handlers):
         return [(x, load_class(y)) for x,y in handlers]
@@ -73,22 +73,5 @@ class Application(tornado.web.Application):
         assert isinstance(self.conf.AUTHENTICATION_BACKENDS, (tuple, list)), \
             "auth_backends must be a list or tuple"
 
-        self._auth_backends = [load_class(x)() for x in self.conf.AUTHENTICATION_BACKENDS]
+        self._auth_backends = [load_class(x)(self) for x in self.conf.AUTHENTICATION_BACKENDS]
 
-    def authenticate(self, **credentials):
-        for backend in self._auth_backends:
-            try:
-                user = backend.authenticate(**credentials)
-            except (TypeError, NotImplementedError):
-                continue
-
-            if user is None:
-                continue
-
-            return user
-        return None
-
-    # Template system methods
-
-    def get_template(self, template_name):
-        return self.jinja_env.get_template(template_name)

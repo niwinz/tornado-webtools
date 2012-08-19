@@ -50,5 +50,14 @@ class settings(object, metaclass=MetaSettings):
 
     SECRET_KEY = "sectet-key-change-me"
 
+    PASSWORD_HASHERS = (
+        'webtools.auth.hashers.PBKDF2PasswordHasher',
+        'webtools.auth.hashers.PBKDF2SHA1PasswordHasher',
+        'webtools.auth.hashers.BCryptPasswordHasher',
+        'webtools.auth.hashers.SHA1PasswordHasher',
+        'webtools.auth.hashers.MD5PasswordHasher',
+        'webtools.auth.hashers.CryptPasswordHasher',
+    )
+
 
 __all__ = ['settings']

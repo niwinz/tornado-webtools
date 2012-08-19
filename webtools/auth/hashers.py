@@ -1,5 +1,5 @@
 from webtools.utils.encoding import smart_bytes
-from webtools.utils.crypto pbkdf2, constant_time_compare, get_random_string
+from webtools.utils.crypto import pbkdf2, constant_time_compare, get_random_string
 
 import base64
 import hashlib
@@ -8,13 +8,6 @@ import importlib
 UNUSABLE_PASSWORD = '!'  # This will never be a valid encoded hash
 HASHERS = None  # lazily loaded from PASSWORD_HASHERS
 PREFERRED_HASHER = None  # defaults to first item in PASSWORD_HASHERS
-
-@receiver(setting_changed)
-def reset_hashers(**kwargs):
-    if kwargs['setting'] == 'PASSWORD_HASHERS':
-        global HASHERS, PREFERRED_HASHER
-        HASHERS = None
-        PREFERRED_HASHER = None
 
 
 def is_password_usable(encoded):
@@ -65,9 +58,13 @@ def make_password(password, salt=None, hasher='default'):
 def load_hashers(password_hashers=None):
     global HASHERS
     global PREFERRED_HASHER
+
+    from webtools.settings import settings
+
     hashers = []
     if not password_hashers:
         password_hashers = settings.PASSWORD_HASHERS
+
     for backend in password_hashers:
         try:
             mod_path, cls_name = backend.rsplit('.', 1)
@@ -80,6 +77,7 @@ def load_hashers(password_hashers=None):
             raise RuntimeError("hasher doesn't specify an "
                                        "algorithm name: %s" % backend)
         hashers.append(hasher)
+
     HASHERS = dict([(hasher.algorithm, hasher) for hasher in hashers])
     PREFERRED_HASHER = hashers[0]
 
