@@ -15,3 +15,6 @@ class User(Base):
 
     def __repr__(self):
         return "<User {0}>".format(self.id)
+
+    def set_password(self, password):
+        self.password = make_password()

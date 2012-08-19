@@ -1,6 +1,5 @@
 
-settings = {
-    "template_dirs": [],
-    "engine_url": "sqlite://",
-    "cookie_secret": "testing",
-}
+from webtools.settings import settings
+
+class TestOverwriteSettings(settings):
+    SQLALCHEMY_ENGINE_URL = "sqlite://"

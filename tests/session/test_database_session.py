@@ -11,10 +11,7 @@ class DatabaseSessionTest(unittest.TestCase):
     def setUpClass(cls):
         from webtools.application import Application
 
-        test_settings = copy.deepcopy(settings)
-        test_settings["engine_kwargs"] = {"echo": False}
-
-        cls.app = Application([], **test_settings)
+        cls.app = Application(settings_module="tests.settings.TestOverwriteSettings")
         Base.metadata.create_all(cls.app.engine)
 
     def test_load(self):

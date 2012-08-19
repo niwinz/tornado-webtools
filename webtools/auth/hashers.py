@@ -50,6 +50,7 @@ def make_password(password, salt=None, hasher='default'):
     password is None or blank then UNUSABLE_PASSWORD will be
     returned which disallows logins.
     """
+
     if not password:
         return UNUSABLE_PASSWORD
 
