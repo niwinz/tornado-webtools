@@ -47,6 +47,29 @@ class Application(tornado.web.Application):
 
         self._jinja_env = Environment(loader=ChoiceLoader(loaders), **jinja_settings)
 
+
+    # Authentication methods
+
+    def _setup_auth_backends(self):
+        assert "auth_backends" in self.settings, "auth_backends settings is not defined"
+        assert isinstance(self.settings['auth_backends'], (tuple, list)), \
+            "auth_backends must be a list or tuple"
+        assert len(self.settings['auth_backends']) > 0, "auth_backends must contains almost one backend"
+
+        self._auth_backends = [load_class(x)() for x in self.settings['auth_backends']]
+
+    def authenticate(self, **credentials):
+        for backend in self._auth_backends:
+            try:
+                user = backend.authenticate(**credentials)
+            except (TypeError, NotImplementedError):
+                continue
+
+            if user is None:
+                continue
+
+            return user
+
     # Template system methods
 
     def get_template(self, template_name):
