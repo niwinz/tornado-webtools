@@ -1,4 +1,9 @@
 
+from sqlalchemy.orm.exc import NoResultFound
+
+from .models import User
+from .hashers import check_password
+
 class BaseAuthenticationBackend(object):
     def __init__(self, application):
         self.application = application
@@ -9,7 +14,8 @@ class BaseAuthenticationBackend(object):
 
 class DatabaseAuthenticationBackend(BaseAuthenticationBackend):
     def authenticate(self, username=None, password=None):
-        from webtools.auth.models import User
-        user = self.application.db.query(User)\
-            .filter(User.username == username).one()
-        return user
+        try:
+            user = self.application.db.query(User).filter(User.username == username).one()
+            return user if check_password(password, user.password) else None
+        except NoResultFound:
+            return None
