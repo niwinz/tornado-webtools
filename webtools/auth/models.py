@@ -2,8 +2,9 @@
 
 from sqlalchemy import Column
 from sqlalchemy.types import Integer, String, DateTime, Unicode
-from ..database import Base
-from .hashers import make_password
+
+from webtools.database import Base
+from webtools.auth.hashers import make_password
 
 
 class User(Base):

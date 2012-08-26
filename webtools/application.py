@@ -44,13 +44,24 @@ class Application(tornado.web.Application):
         self.db = scoped_session(sessionmaker(bind=self.engine))
 
     def _setup_template_engine(self):
-        from jinja2 import Environment, PackageLoader, ChoiceLoader
+        from jinja2 import Environment, PackageLoader, ChoiceLoader, FileSystemLoader
 
         template_dirs = self.conf.JINJA2_TEMPLATE_DIRS
         if template_dirs is None:
-            raise RuntimeError("Missing `template_dirs` setting")
+            raise RuntimeError("Missing `JINJA2_TEMPLATE_DIRS` setting")
 
-        loaders = [PackageLoader(*args) for args in template_dirs]
+        loaders = []
+        for params in template_dirs:
+            if isinstance(params, str):
+                loaders.append(FileSystemLoader(params))
+                continue
+
+            elif isinstance(params, (tuple, list, set)):
+                if len(params) == 2:
+                    loaders.append(PackageLoader(*params))
+                    continue
+
+            raise RuntimeError("Invalid JINJA2_TEMPLATE_DIRS variable on settings")
 
         jinja_settings = self.conf.JINJA2_SETTINGS
         self.jinja_env = Environment(loader=ChoiceLoader(loaders), **jinja_settings)

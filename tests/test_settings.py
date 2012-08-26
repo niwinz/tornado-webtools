@@ -21,7 +21,6 @@ class SampleTest(unittest.TestCase):
         self.settings.clear_to_default()
         self.assertEqual(self.settings.TORNADO_SETTINGS, {})
 
-
     def test_overwrite_2(self):
         self.settings.configure({
             "TORNADO_SETTINGS": {"foo": "bar"}

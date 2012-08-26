@@ -8,3 +8,7 @@ class ResponseHandlerMixin(object):
         template = self.get_template(template)
         for chuck in template.generate(context):
             self.write(chuck)
+
+    def render_to_string(self, template, context={}):
+        template = self.get_template(template)
+        return template.render(context)
