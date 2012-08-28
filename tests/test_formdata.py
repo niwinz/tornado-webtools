@@ -15,19 +15,18 @@ class HandlerMock(object):
         return value
 
 
-
-from webtools.formdata import FormData, Field, Typer
-from webtools.formdata import IntegerTyper, UnicodeTyper
-from webtools.formdata import MultipleUnicodeTyper, MultipleIntegerTyper
+from webtools.formdata.base import FormData
+from webtools.formdata.field import Field
+from webtools.formdata import data_types as types
 
 
 class TestForm1(FormData):
-    field1 = Field(typer=UnicodeTyper())
-    field2 = Field(typer=IntegerTyper())
+    field1 = Field(types.Unicode())
+    field2 = Field(types.Integer())
 
 class TestForm2(FormData):
-    field1 = Field(typer=UnicodeTyper())
-    field2 = Field(typer=IntegerTyper(), required=False)
+    field1 = Field(types.Unicode())
+    field2 = Field(types.Integer(), required=False)
 
 
 class FormDataTests(TestCase):
@@ -66,4 +65,5 @@ class FormDataTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("field2", form.errors)
         self.assertIn("field1", form._initial)
+        self.assertIn("field1", form.cleaned_data)
 
