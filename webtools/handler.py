@@ -16,4 +16,3 @@ class BaseHandler(tornado.web.RequestHandler):
             self.session.save()
 
         super(BaseHandler, self).on_finish()
-

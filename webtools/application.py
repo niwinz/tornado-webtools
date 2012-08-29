@@ -86,3 +86,10 @@ class Application(tornado.web.Application):
 
         self._auth_backends = [load_class(x)(self) for x in self.conf.AUTHENTICATION_BACKENDS]
 
+    def _authenticate(self, username=None, password=None):
+        for backend in self._auth_backends:
+            user = backend.authenticate(username=username, password=password)
+            if user:
+                return user
+
+        return None
