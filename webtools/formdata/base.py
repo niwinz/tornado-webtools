@@ -20,6 +20,21 @@ class FormDataMeta(type):
         return super(FormDataMeta, cls).__new__(cls, name, bases, attrs)
 
 
+class BoundField(object):
+    def __init__(self, name, prefixed_name, field, form):
+        self.name = name
+        self.prefixed_name = prefixed_name
+        self.field = field
+        self.form = form
+
+    def __str__(self):
+        if not self.field.widget:
+            return ""
+
+        value = self.form._initial.get(self.name, None)
+        return self.field.widget(self.name, self.prefixed_name, value)
+
+
 class FormDataBase(object):
     def __init__(self, handler=None, initial={}, prefix=None):
         self.handler = handler
@@ -74,6 +89,15 @@ class FormDataBase(object):
 
     def get_argument(self, name):
         return self.handler.get_arguments(name)
+
+    def __getitem__(self, name):
+        if name in self.base_fields:
+            return BoundField(name, self.with_prefix(name), self.base_fields[name], self)
+
+        raise KeyError("{0} field does not exists".format(name))
+
+    def __getattr__(self, name):
+        return self[name]
 
 
 class FormData(FormDataBase, metaclass=FormDataMeta):

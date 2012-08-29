@@ -18,6 +18,7 @@ class HandlerMock(object):
 from webtools.formdata.base import FormData
 from webtools.formdata.field import Field
 from webtools.formdata import data_types as types
+from webtools.formdata import widgets
 
 
 class TestForm1(FormData):
@@ -67,3 +68,19 @@ class FormDataTests(TestCase):
         self.assertIn("field1", form._initial)
         self.assertIn("field1", form.cleaned_data)
 
+
+
+class WidgetTests(TestCase):
+    def setUp(self):
+        class SampleForm(FormData):
+            fl1 = Field(types.Unicode(), widget=widgets.InputText)
+
+        self.form_cls = SampleForm
+
+    def test_simple_rendering(self):
+        form = self.form_cls()
+        self.assertEqual(str(form.fl1), '<input type="text" name="fl1"></input>')
+
+    def test_rendering_with_initial_value(self):
+        form = self.form_cls(initial={"fl1":"Hello"})
+        self.assertEqual(str(form.fl1), '<input type="text" name="fl1" value="Hello"></input>')

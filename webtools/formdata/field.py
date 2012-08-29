@@ -8,11 +8,12 @@ class Field(object):
         self.datatype = datatype
         self.default = default
         self.required = required
-
         self.widget = widget
+
         if self.widget:
+            if isinstance(self.widget, type):
+                self.widget = self.widget()
             assert isinstance(self.widget, Widget), "widget must be a instance of Widget"
-            self.widget.set_field(self)
 
     def clean(self, name, formdata):
         raw_value = formdata.get_argument(name)
