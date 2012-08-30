@@ -25,8 +25,13 @@ class Command(object):
             name = name[:-3]
         return name
 
-    def get_description(self):
-        return inspect.getdoc(self.__class__) or ''
+    @classmethod
+    def get_description(cls):
+        doc = inspect.getdoc(cls)
+        if not doc:
+            return ""
+
+        return doc.strip().split("\n")[0]
 
     def get_parser(self):
         """
@@ -62,7 +67,8 @@ class Command(object):
 class CommandManager(object):
     commands = {}
     default_commands= [
-        "webtools.management.commands.help.HelpCommand"
+        "webtools.management.commands.help.HelpCommand",
+        "webtools.management.commands.runserver.RunserverCommand"
     ]
 
     def __init__(self, app):
@@ -198,22 +204,24 @@ class CommandApp(object):
         if self.options.log_file:
             file_handler = logging.FileHandler(
                 filename=self.options.log_file,
-                )
+            )
             formatter = logging.Formatter(self.LOG_FILE_MESSAGE_FORMAT)
             file_handler.setFormatter(formatter)
             root_logger.addHandler(file_handler)
 
         # Always send higher-level messages to the console via stderr
         console = logging.StreamHandler(self.stderr)
-        console_level = {0: logging.WARNING,
-                         1: logging.INFO,
-                         2: logging.DEBUG,
-                         }.get(self.options.verbose_level, logging.DEBUG)
+        console_level = {
+            0: logging.WARNING,
+            1: logging.INFO,
+            2: logging.DEBUG,
+        }.get(self.options.verbose_level, logging.DEBUG)
         console.setLevel(console_level)
+
         formatter = logging.Formatter(self.CONSOLE_MESSAGE_FORMAT)
         console.setFormatter(formatter)
+
         root_logger.addHandler(console)
-        return
 
     def _load_settings(self, settings_path):
         """
@@ -227,7 +235,7 @@ class CommandApp(object):
             settings_cls = load_class(settings_path)
             return settings_cls()
         except ImportError:
-            raise RuntimeError("Cannot import application file {0}.py".format(self.app_file))
+            raise RuntimeError("Cannot import settings: {0}".format(settings_path))
 
     def run(self, argv):
         """
@@ -258,6 +266,7 @@ class CommandApp(object):
             return self.run_subcommand(remainder)
 
     def run_subcommand(self, argv):
+
         subcommand = self.manager.find_command(argv)
         cmd_cls, cmd_name, sub_argv = subcommand
         cmd = cmd_cls(self, self.options)
