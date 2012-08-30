@@ -28,9 +28,9 @@ class Application(tornado.web.Application):
     session_engine = None
     jinja_env = None
 
-    def __init__(self, handlers=[], settings_module='webtools.settings.settings'):
-        handlers = self._setup_handlers(handlers) or None
+    def __init__(self, settings_module='webtools.settings.settings'):
         self.conf = load_class(settings_module)()
+        handlers = self._setup_handlers(self.conf.HANDLERS) or None
 
         tornado_settings = copy.deepcopy(self.conf.TORNADO_SETTINGS)
         tornado_settings.update({"cookie_secret": self.conf.SECRET_KEY})
@@ -46,6 +46,8 @@ class Application(tornado.web.Application):
         set_app(self)
 
     def _setup_handlers(self, handlers):
+        if handlers is None:
+            return None
         return [(x, load_class(y)) for x,y in handlers]
 
     def _setup_database_engine(self):
