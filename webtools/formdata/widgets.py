@@ -1,6 +1,10 @@
 import copy
 
 class Widget(object):
+    """
+    Base class for all formdata widgets.
+    """
+
     def __init__(self, attrs={}):
         self.attrs = attrs
 
@@ -17,6 +21,7 @@ class Widget(object):
     def __call__(self, name, prefixed_name, value):
         return self.render(name, prefixed_name, value)
 
+
 class InputText(Widget):
     def render(self, name, prefixed_name, value):
         attrs = {"type": "text", "name": prefixed_name}
@@ -25,3 +30,10 @@ class InputText(Widget):
 
         attrs.update(self.attrs)
         return "<input {0}></input>".format(self.attrs_to_str(attrs))
+
+
+class Textarea(Widget):
+    def render(self, name, prefixed_name, value):
+        attrs = {"name": prefixed_name}
+        return "<textarea {0}>{1}</textarea>".format(
+                    self.attrs_to_str(attrs), value or "")

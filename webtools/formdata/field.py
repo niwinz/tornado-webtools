@@ -23,3 +23,21 @@ class Field(object):
             if not self.required:
                 return self.default
             raise ValidateError("this field is required")
+
+
+class BoundField(object):
+    def __init__(self, name, prefixed_name, field, form):
+        self.name = name
+        self.prefixed_name = prefixed_name
+        self.field = field
+        self.form = form
+
+    def __str__(self):
+        if not self.field.widget:
+            return ""
+
+        value = self.form._initial.get(self.name, None)
+        value = self.field.datatype.from_python(value)
+
+        return self.field.widget(self.name, self.prefixed_name, value)
+

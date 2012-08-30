@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
+import copy
 
 class MetaSettings(type):
-    _settings = []
 
     def __new__(cls, name, bases, attrs):
         super_attrs, settings = {}, {}
@@ -15,23 +14,33 @@ class MetaSettings(type):
         instance._settings.insert(0, settings)
         return instance
 
-    def configure(cls, data):
-        assert isinstance(data, dict), "Invalid parameters"
-        cls._settings.insert(0, data)
 
-    def __getattr__(cls, key):
-        for settings_layer in cls._settings:
+class BaseSettings(object):
+    _settings = []
+
+    def __init__(self):
+        self.settings = copy.deepcopy(self._settings)
+
+    def __getattr__(self, key):
+        if key != key.upper():
+            return super(BaseSettings, self).__getattr__(key)
+
+        for settings_layer in self.settings:
             if key in settings_layer:
                 return settings_layer[key]
 
         return None
 
-    def clear_to_default(cls):
-        original_settings = cls._settings[-1]
-        cls._settings = [original_settings]
+    def configure(self, data):
+        assert isinstance(data, dict), "Invalid parameters"
+        self.settings.insert(0, data)
+
+    def clear_to_default(self):
+        original_settings = self._settings[-1]
+        self.settings = [original_settings]
 
 
-class settings(object, metaclass=MetaSettings):
+class Settings(BaseSettings, metaclass=MetaSettings):
     SESSION_ENGINE = 'webtools.session.backend.database.DatabaseEngine'
     SESSION_ENGINE_KWARGS = {}
 

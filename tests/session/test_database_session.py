@@ -2,7 +2,6 @@
 import unittest
 
 from webtools.database import Base
-from ..settings import settings
 import copy
 
 

@@ -1,10 +1,10 @@
 
-from webtools.settings import settings
+from webtools.settings import Settings
 import os.path
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
 
-class TestOverwriteSettings(settings):
+class TestOverwriteSettings(Settings):
     SQLALCHEMY_ENGINE_URL = "sqlite://"
     AUTHENTICATION_BACKENDS = ["webtools.auth.backends.DatabaseAuthenticationBackend"]
 

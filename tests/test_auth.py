@@ -3,8 +3,6 @@ import unittest
 from webtools.database import Base
 from webtools.auth.models import User
 
-from .settings import settings
-
 
 class AuthDatabaseTest(unittest.TestCase):
     @classmethod

@@ -59,11 +59,13 @@ def load_hashers(password_hashers=None):
     global HASHERS
     global PREFERRED_HASHER
 
-    from webtools.settings import settings
+    from webtools.application import get_app
+    PASSWORD_HASHERS = get_app().conf.PASSWORD_HASHERS
+
 
     hashers = []
     if not password_hashers:
-        password_hashers = settings.PASSWORD_HASHERS
+        password_hashers = PASSWORD_HASHERS
 
     for backend in password_hashers:
         try:

@@ -1,6 +1,11 @@
 from .exceptions import ValidateError
 
 class Type(object):
+    """
+    Base class for all type conversion
+    for a formdata.
+    """
+
     def to_python(self, value, field):
         return value
 
@@ -36,3 +41,11 @@ class MultipleInteger(Type):
             return [int(x) for x in value]
         except (ValueError, TypeError):
             raise ValidateError("Invalid data")
+
+
+class Date(Type):
+    pass
+
+
+class DateTime(Type):
+    pass

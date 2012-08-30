@@ -5,6 +5,22 @@ import copy
 
 from .utils.imp import load_class
 
+_global_app = None
+
+def get_app():
+    global _global_app
+    if _global_app is None:
+        raise RuntimeError("Application is not initialized")
+
+    return _global_app
+
+def set_app(_app):
+    global _global_app
+    _global_app = _app
+
+def del_app():
+    global _global_app
+    _global_app = None
 
 
 class Application(tornado.web.Application):
@@ -14,7 +30,7 @@ class Application(tornado.web.Application):
 
     def __init__(self, handlers=[], settings_module='webtools.settings.settings'):
         handlers = self._setup_handlers(handlers) or None
-        self.conf = load_class(settings_module)
+        self.conf = load_class(settings_module)()
 
         tornado_settings = copy.deepcopy(self.conf.TORNADO_SETTINGS)
         tornado_settings.update({"cookie_secret": self.conf.SECRET_KEY})
@@ -26,6 +42,8 @@ class Application(tornado.web.Application):
         self._setup_template_engine()
         self._setup_session_engine()
         self._setup_authentication_engine()
+
+        set_app(self)
 
     def _setup_handlers(self, handlers):
         return [(x, load_class(y)) for x,y in handlers]
