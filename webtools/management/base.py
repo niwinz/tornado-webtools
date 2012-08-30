@@ -1,5 +1,6 @@
 import sys
 import argparse
+import importlib
 import inspect
 import logging
 import logging.handlers
@@ -11,8 +12,13 @@ LOG = logging.getLogger(__name__)
 
 
 class Command(object):
-    def get_name(self):
-        name = self.__class__.__name__.lower()
+    def __init__(self, cmdapp, options):
+        self.cmdapp = cmdapp
+        self.options = options
+
+    @classmethod
+    def get_name(cls):
+        name = cls.__name__.lower()
         if name.endswith("command"):
             name = name[:-7]
         elif name.endswith("cmd"):
@@ -23,7 +29,8 @@ class Command(object):
         return inspect.getdoc(self.__class__) or ''
 
     def get_parser(self):
-        """Return an :class:`argparse.ArgumentParser`.
+        """
+        Return an :class:`argparse.ArgumentParser`.
         """
         parser = argparse.ArgumentParser(
             description = self.get_description(),
@@ -32,7 +39,8 @@ class Command(object):
         return parser
 
     def take_action(self, parsed_args):
-        """Override to do something useful.
+        """
+        Override to do something useful.
         """
         raise NotImplementedError
 
@@ -59,15 +67,19 @@ class CommandManager(object):
 
     def __init__(self, app):
         self.app = app
-        self._load_commands()
 
     def _load_commands(self):
-        commands_to_load = set(self.app.conf.COMMANDS or [])
-        commands_to_load.update(self.default_commands)
+        commands = {}
 
-        for class_path from commands_to_load:
+        command_list = set(self.default_commands[:])
+        if self.app.conf is not None:
+            command_list.update(self.app.conf.COMMANDS or [])
+
+        for class_path in command_list:
             klass = load_class(class_path)
-            self.commands[klass.get_name()] = klass
+            commands[klass.get_name()] = klass
+
+        return commands
 
     def find_command(self, argv):
         """
@@ -77,14 +89,16 @@ class CommandManager(object):
         search_args = argv[:]
         name = ""
 
+        commands = self._load_commands()
+
         while search_args:
             if search_args[0].startswith("-"):
                 raise ValueError('Invalid command %r' % search_args[0])
 
             next_val = search_args.pop(0)
             name = '%s %s' % (name, next_val) if name else next_val
-            if name in self.commands:
-                cmd_cls = self.commands[name]
+            if name in commands:
+                cmd_cls = commands[name]
                 return (cmd_cls, name, search_args)
         else:
             raise ValueError('Unknown command %r' %
@@ -92,43 +106,24 @@ class CommandManager(object):
 
 
 class CommandApp(object):
-    _app_loaded = False
+    NAME = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 
-    app_file = "app"
-    app_callable = "application"
+    CONSOLE_MESSAGE_FORMAT = '%(message)s'
+    LOG_FILE_MESSAGE_FORMAT = \
+        '[%(asctime)s] %(levelname)-8s %(name)s %(message)s'
+
+    DEFAULT_VERBOSE_LEVEL = 1
 
     def __init__(self):
-        #self._load_main_app()
-        self.stdin = stdin or sys.stdin
-        self.stdout = stdout or sys.stdout
-        self.stderr = stderr or sys.stderr
-
-        self.manager = CommandManager(self)
+        self.stdin = sys.stdin
+        self.stdout = sys.stdout
+        self.stderr = sys.stderr
 
         description = "Webtools command manager"
         version = "0.1"
 
         self.parser = self.build_option_parser(description, version)
-
-    def _load_main_app(self):
-        """
-        Load a main tornado application.
-        """
-
-        if self._app_loaded:
-            return
-
-        _absolute_path = os.path.abspath(".")
-        _module = importlib.import_module(self.app_file)
-
-        self.application = getattr(_module, self.app_callable, None)
-
-        if application is None:
-            raise RuntimeError("Cannot load {0} from {1} module"\
-                .format(self.app_callable, self.app_file))
-
-        self.conf = self.application.conf
-        self._app_loaded = True
+        self.manager = CommandManager(self)
 
     def build_option_parser(self, description, version):
         """
@@ -143,8 +138,7 @@ class CommandApp(object):
         :paramtype version: str
         """
         parser = argparse.ArgumentParser(
-            description=description,
-            add_help=False,
+            description=description
         )
         parser.add_argument(
             '--version',
@@ -163,6 +157,13 @@ class CommandApp(object):
             action='store',
             default=None,
             help='Specify a file to log output. Disabled by default.',
+        )
+        parser.add_argument(
+            '--settings',
+            action='store',
+            default=None,
+            help='Specify a settings class path.',
+            dest="settings",
         )
         parser.add_argument(
             '-q', '--quiet',
@@ -214,6 +215,20 @@ class CommandApp(object):
         root_logger.addHandler(console)
         return
 
+    def _load_settings(self, settings_path):
+        """
+        Load a main tornado application.
+        """
+
+        if settings_path is None:
+            return None
+
+        try:
+            settings_cls = load_class(settings_path)
+            return settings_cls()
+        except ImportError:
+            raise RuntimeError("Cannot import application file {0}.py".format(self.app_file))
+
     def run(self, argv):
         """
         Equivalent to the main program for the application.
@@ -223,6 +238,7 @@ class CommandApp(object):
         """
         try:
             self.options, remainder = self.parser.parse_known_args(argv)
+            self.conf = self._load_settings(self.options.settings)
             self.configure_logging()
         except Exception as err:
             if hasattr(self, 'options'):
@@ -235,16 +251,21 @@ class CommandApp(object):
             else:
                 LOG.error(err)
             return 1
-        return self.run_subcommand(remainder)
+
+        if len(argv) == 0:
+            self.parser.print_help()
+        else:
+            return self.run_subcommand(remainder)
 
     def run_subcommand(self, argv):
         subcommand = self.manager.find_command(argv)
         cmd_cls, cmd_name, sub_argv = subcommand
+        cmd = cmd_cls(self, self.options)
 
         result = 1
         try:
             cmd_parser = cmd.get_parser()
-            parsed_args = cmd_parser.parsed_args(sub_argv)
+            parsed_args = cmd_parser.parse_args(sub_argv)
             result = cmd.run(parsed_args)
         except Exception as e:
             if self.options.debug:

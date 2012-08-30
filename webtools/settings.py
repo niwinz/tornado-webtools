@@ -1,7 +1,6 @@
 import copy
 
 class MetaSettings(type):
-
     def __new__(cls, name, bases, attrs):
         super_attrs, settings = {}, {}
         for attr, val in attrs.items():

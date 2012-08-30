@@ -28,8 +28,8 @@ class Application(tornado.web.Application):
     session_engine = None
     jinja_env = None
 
-    def __init__(self, settings_module='webtools.settings.settings'):
-        self.conf = load_class(settings_module)()
+    def __init__(self, settings):
+        self.conf = settings
         handlers = self._setup_handlers(self.conf.HANDLERS) or None
 
         tornado_settings = copy.deepcopy(self.conf.TORNADO_SETTINGS)
