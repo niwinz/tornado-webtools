@@ -1,5 +1,6 @@
 import sys
 import argparse
+import traceback
 import importlib
 import inspect
 import logging
@@ -118,7 +119,7 @@ class CommandApp(object):
     LOG_FILE_MESSAGE_FORMAT = \
         '[%(asctime)s] %(levelname)-8s %(name)s %(message)s'
 
-    DEFAULT_VERBOSE_LEVEL = 1
+    DEFAULT_VERBOSE_LEVEL = 2
 
     def __init__(self):
         self.stdin = sys.stdin
@@ -217,6 +218,7 @@ class CommandApp(object):
             2: logging.DEBUG,
         }.get(self.options.verbose_level, logging.DEBUG)
         console.setLevel(console_level)
+        console.setLevel(logging.DEBUG)
 
         formatter = logging.Formatter(self.CONSOLE_MESSAGE_FORMAT)
         console.setFormatter(formatter)
@@ -244,24 +246,18 @@ class CommandApp(object):
         :param argv: input arguments and options
         :paramtype argv: list of str
         """
+        sys.path.insert(0, os.path.abspath("."))
         try:
             self.options, remainder = self.parser.parse_known_args(argv)
-            self.conf = self._load_settings(self.options.settings)
             self.configure_logging()
+            self.conf = self._load_settings(self.options.settings)
         except Exception as err:
-            if hasattr(self, 'options'):
-                debug = self.options.debug
-            else:
-                debug = True
-            if debug:
-                LOG.exception(err)
-                raise
-            else:
-                LOG.error(err)
+            traceback.print_exc()
             return 1
 
         if len(argv) == 0:
             self.parser.print_help()
+            return 1
         else:
             return self.run_subcommand(remainder)
 
@@ -277,10 +273,7 @@ class CommandApp(object):
             parsed_args = cmd_parser.parse_args(sub_argv)
             result = cmd.run(parsed_args)
         except Exception as e:
-            if self.options.debug:
-                LOG.exception(e)
-            else:
-                LOG.error(e)
+            traceback.print_exc()
         finally:
             return result
 
