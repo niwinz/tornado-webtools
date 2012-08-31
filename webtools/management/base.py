@@ -65,7 +65,8 @@ class CommandManager(object):
     commands = {}
     default_commands= [
         "webtools.management.commands.help.HelpCommand",
-        "webtools.management.commands.runserver.RunserverCommand"
+        "webtools.management.commands.runserver.RunserverCommand",
+        "webtools.management.commands.syncdb.SyncdbCommand",
     ]
 
     def __init__(self, app):
