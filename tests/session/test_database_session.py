@@ -2,6 +2,7 @@
 import unittest
 
 from webtools.database import Base
+from ..settings import TestOverwriteSettings
 import copy
 
 
@@ -10,7 +11,7 @@ class DatabaseSessionTest(unittest.TestCase):
     def setUpClass(cls):
         from webtools.application import Application
 
-        cls.app = Application(settings_module="tests.settings.TestOverwriteSettings")
+        cls.app = Application(TestOverwriteSettings())
         Base.metadata.create_all(cls.app.engine)
 
     @classmethod

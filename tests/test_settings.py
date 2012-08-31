@@ -1,5 +1,6 @@
 import unittest
 
+
 class SampleTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -20,3 +21,20 @@ class SampleTest(unittest.TestCase):
         self.assertEqual(self.settings.TORNADO_SETTINGS, {"foo": "bar"})
         self.settings.clear_to_default()
         self.assertEqual(self.settings.TORNADO_SETTINGS, {})
+
+    def test_subclasses(self):
+        from webtools.settings import Settings
+
+        class FooSettings(Settings):
+            FOO = 1
+
+        settings = FooSettings()
+        self.assertEqual(settings.FOO, 1)
+        self.assertEqual(settings.FOO2, None)
+
+        class Foo2Settings(FooSettings):
+            FOO = 2
+
+        settings = Foo2Settings()
+        self.assertEqual(settings.FOO, 2)
+        self.assertEqual(settings.FOO2, None)

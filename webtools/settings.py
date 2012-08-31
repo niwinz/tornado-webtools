@@ -81,4 +81,4 @@ class Settings(BaseSettings, metaclass=MetaSettings):
     CSRF_COOKIE_NAME = "csrftoken"
 
 
-__all__ = ['settings']
+__all__ = ['Settings']

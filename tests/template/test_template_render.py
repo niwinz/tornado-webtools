@@ -1,7 +1,9 @@
 from webtools.template.handlers import ResponseHandlerMixin
+
 from unittest import TestCase
-import os.path
-import io
+import os.path, io
+
+from ..settings import TestOverwriteSettings
 
 class ResponseMock(ResponseHandlerMixin, object):
     buffer = io.StringIO()
@@ -15,7 +17,7 @@ class DefaultTemplateTests(TestCase):
     def setUpClass(cls):
         from webtools.application import Application
 
-        cls.app = Application(settings_module="tests.settings.TestOverwriteSettings")
+        cls.app = Application(TestOverwriteSettings())
 
     def setUp(self):
         self.handler = ResponseMock()

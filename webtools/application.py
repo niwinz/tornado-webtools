@@ -31,16 +31,13 @@ class Application(tornado.web.Application):
     def __init__(self, settings):
         self.conf = settings
 
-        handlers_path = self.conf.HANDLERS
-        if handlers_path is None:
-            raise RuntimeError("Cannot import  handlers path: {0}".format(handlers_path))
-
-        try:
-            handlers = load_class(handlers_path + ".patterns")
-        except ImportError:
-            raise RuntimeError("Cannot import  handlers path: {0}".format(handlers_path))
-
-        handlers = self._setup_handlers(handlers) or None
+        handlers = self.conf.HANDLERS
+        if handlers is not None:
+            try:
+                handlers = load_class(handlers + ".patterns")
+            except ImportError:
+                raise RuntimeError("Cannot import  handlers path: {0}".format(handlers))
+            handlers = self._setup_handlers(handlers) or None
 
         tornado_settings = copy.deepcopy(self.conf.TORNADO_SETTINGS)
         tornado_settings.update({"cookie_secret": self.conf.SECRET_KEY})
