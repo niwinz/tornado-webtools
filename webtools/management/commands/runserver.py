@@ -2,18 +2,16 @@
 from webtools.management.base import Command
 from webtools.utils.imp import load_class
 
-import sys, os.path
-
 
 class RunserverCommand(Command):
     def take_action(self, options):
-        if not self.options.settings:
+        if not options.settings:
             raise RuntimeError("For start serverm --settings parameter"
                                 " is mandatory!")
         try:
-            settings_cls = load_class(self.options.settings)
+            settings_cls = load_class(options.settings)
         except ImportError:
-            raise RuntimeError("Cannot load settings class: {0}".format(self.options.settings))
+            raise RuntimeError("Cannot load settings class: {0}".format(options.settings))
 
         from webtools.application import Application
         app = Application(settings_cls())

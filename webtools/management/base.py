@@ -13,9 +13,8 @@ LOG = logging.getLogger(__name__)
 
 
 class Command(object):
-    def __init__(self, cmdapp, options):
+    def __init__(self, cmdapp):
         self.cmdapp = cmdapp
-        self.options = options
 
     @classmethod
     def get_name(cls):
@@ -34,15 +33,12 @@ class Command(object):
 
         return doc.strip().split("\n")[0]
 
-    def get_parser(self):
+    @classmethod
+    def get_parser(cls, root_parser):
         """
         Return an :class:`argparse.ArgumentParser`.
         """
-        parser = argparse.ArgumentParser(
-            description = self.get_description(),
-            prog = self.get_name(),
-        )
-        return parser
+        return root_parser
 
     def take_action(self, parsed_args):
         """
@@ -88,28 +84,17 @@ class CommandManager(object):
 
         return commands
 
-    def find_command(self, argv):
+    def find_command(self, name):
         """
         Given an argument list, find a command and
         return the processor and any remaining arguments.
         """
-        search_args = argv[:]
-        name = ""
 
         commands = self._load_commands()
+        if name in commands:
+            return commands[name]
 
-        while search_args:
-            if search_args[0].startswith("-"):
-                raise ValueError('Invalid command %r' % search_args[0])
-
-            next_val = search_args.pop(0)
-            name = '%s %s' % (name, next_val) if name else next_val
-            if name in commands:
-                cmd_cls = commands[name]
-                return (cmd_cls, name, search_args)
-        else:
-            raise ValueError('Unknown command %r' %
-                             (argv,))
+        return None
 
 
 class CommandApp(object):
@@ -129,7 +114,7 @@ class CommandApp(object):
         description = "Webtools command manager"
         version = "0.1"
 
-        self.parser = self.build_option_parser(description, version)
+        self.root_parser = self.build_option_parser(description, version)
         self.manager = CommandManager(self)
 
     def build_option_parser(self, description, version):
@@ -198,32 +183,34 @@ class CommandApp(object):
         """
         Create logging handlers for any log output.
         """
-        root_logger = logging.getLogger('')
-        root_logger.setLevel(logging.DEBUG)
+        self.root_logger = logging.getLogger('')
+        self.root_logger.setLevel(logging.DEBUG)
 
+        # Always send higher-level messages to the console via stderr
+        self.console = logging.StreamHandler(self.stderr)
+        self.console.setLevel(logging.DEBUG)
+
+        formatter = logging.Formatter(self.CONSOLE_MESSAGE_FORMAT)
+
+        self.console.setFormatter(formatter)
+        self.root_logger.addHandler(self.console)
+
+    def _adjunst_logging_level(self, options):
         # Set up logging to a file
-        if self.options.log_file:
+        if options.log_file:
             file_handler = logging.FileHandler(
-                filename=self.options.log_file,
+                filename=options.log_file,
             )
             formatter = logging.Formatter(self.LOG_FILE_MESSAGE_FORMAT)
             file_handler.setFormatter(formatter)
-            root_logger.addHandler(file_handler)
+            self.root_logger.addHandler(file_handler)
 
-        # Always send higher-level messages to the console via stderr
-        console = logging.StreamHandler(self.stderr)
         console_level = {
             0: logging.WARNING,
             1: logging.INFO,
             2: logging.DEBUG,
-        }.get(self.options.verbose_level, logging.DEBUG)
-        console.setLevel(console_level)
-        console.setLevel(logging.DEBUG)
-
-        formatter = logging.Formatter(self.CONSOLE_MESSAGE_FORMAT)
-        console.setFormatter(formatter)
-
-        root_logger.addHandler(console)
+        }.get(options.verbose_level, logging.DEBUG)
+        self.console.setLevel(console_level)
 
     def _load_settings(self, settings_path):
         """
@@ -247,35 +234,28 @@ class CommandApp(object):
         :paramtype argv: list of str
         """
         sys.path.insert(0, os.path.abspath("."))
-        try:
-            self.options, remainder = self.parser.parse_known_args(argv)
-            self.configure_logging()
-            self.conf = self._load_settings(self.options.settings)
-        except Exception as err:
-            traceback.print_exc()
-            return 1
+        self.configure_logging()
 
         if len(argv) == 0:
-            self.parser.print_help()
+            self.root_parser.print_help()
             return 1
-        else:
-            return self.run_subcommand(remainder)
 
-    def run_subcommand(self, argv):
+        options, extra_args = self.root_parser.parse_known_args(argv)
+        self.conf = self._load_settings(options.settings)
+        self._adjunst_logging_level(options)
 
-        subcommand = self.manager.find_command(argv)
-        cmd_cls, cmd_name, sub_argv = subcommand
-        cmd = cmd_cls(self, self.options)
+        if not argv[0].startswith("-"):
+            command_name, argv = argv[0], argv[1:]
 
-        result = 1
-        try:
-            cmd_parser = cmd.get_parser()
-            parsed_args = cmd_parser.parse_args(sub_argv)
-            result = cmd.run(parsed_args)
-        except Exception as e:
-            traceback.print_exc()
-        finally:
-            return result
+            cmd_cls = self.manager.find_command(command_name)
+            if cmd_cls is None:
+                raise RuntimeError("Command {0} not found".format(command_name))
+
+            parser = cmd_cls.get_parser(self.root_parser)
+            options = parser.parse_args(argv)
+            return cmd_cls(self).run(options)
+
+        return 1
 
 
 def main(argv=sys.argv[1:]):
