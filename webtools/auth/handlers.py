@@ -9,8 +9,12 @@ class AuthHandlerMixin(object):
         if user is not None:
             self.session["user_id"] = user.id
 
-    @property
-    def current_user(self):
+    def get_current_user(self):
+        if hasattr(self, "_user"):
+            return self._user
+
         if "user_id" in self.session:
-            return self.db.query(User).filter(User.id == self.session["user_id"]).one()
+            self._user = self.db.query(User).filter(User.id == self.session["user_id"]).one()
+            return self._user
+
         return None

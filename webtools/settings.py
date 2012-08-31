@@ -54,6 +54,7 @@ class Settings(BaseSettings, metaclass=MetaSettings):
     # Jinja2 settings
     JINJA2_TEMPLATE_DIRS = []
     JINJA2_SETTINGS = {"cache_size": 100}
+    JINJA2_CONTEXT_PROCESSORS = []
 
     # Low level tornado options.
     TORNADO_TRANSFORMS = None

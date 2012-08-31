@@ -28,6 +28,9 @@ class Application(tornado.web.Application):
     session_engine = None
     jinja_env = None
 
+    auth_backends = []
+    context_processors = []
+
     def __init__(self, settings):
         self.conf = settings
 
@@ -46,9 +49,9 @@ class Application(tornado.web.Application):
             transforms=self.conf.TORNADO_TRANSFORMS, wsgi=self.conf.TORNADO_WSGI_MODE, **tornado_settings)
 
         self._setup_database_engine()
-        self._setup_template_engine()
         self._setup_session_engine()
         self._setup_authentication_engine()
+        self._setup_template_engine()
 
         set_app(self)
 
@@ -90,8 +93,12 @@ class Application(tornado.web.Application):
 
             raise RuntimeError("Invalid JINJA2_TEMPLATE_DIRS variable on settings")
 
-        jinja_settings = self.conf.JINJA2_SETTINGS
-        self.jinja_env = Environment(loader=ChoiceLoader(loaders), **jinja_settings)
+        self.jinja_env = Environment(loader=ChoiceLoader(loaders),
+            **self.conf.JINJA2_SETTINGS)
+
+        # load context processors
+        context_processors = self.conf.JINJA2_CONTEXT_PROCESSORS or []
+        self.context_processors = [load_class(x) for x in context_processors]
 
     # Session methods
 
@@ -111,10 +118,15 @@ class Application(tornado.web.Application):
         assert isinstance(self.conf.AUTHENTICATION_BACKENDS, (tuple, list)), \
             "auth_backends must be a list or tuple"
 
-        self._auth_backends = [load_class(x)(self) for x in self.conf.AUTHENTICATION_BACKENDS]
+        self.auth_backends = [load_class(x)(self) for x in self.conf.AUTHENTICATION_BACKENDS]
+        if self.session_engine is None:
+            raise RuntimeError("Auth subsystem works only with session")
+
+        # Add auth context processor to global list
+        self.conf.JINJA2_CONTEXT_PROCESSORS.append("webtools.auth.context_processors.auth")
 
     def _authenticate(self, username=None, password=None):
-        for backend in self._auth_backends:
+        for backend in self.auth_backends:
             user = backend.authenticate(username=username, password=password)
             if user:
                 return user

@@ -7,6 +7,7 @@ from ..settings import TestOverwriteSettings
 
 class ResponseMock(ResponseHandlerMixin, object):
     buffer = io.StringIO()
+    context_processors = []
 
     def write(self, chuck):
         self.buffer.write(chuck)
