@@ -78,5 +78,7 @@ class Settings(BaseSettings, metaclass=MetaSettings):
     # correct loading all models on run syncdb command.
     MODELS_MODULES = []
 
+    CSRF_COOKIE_NAME = "csrftoken"
+
 
 __all__ = ['settings']
