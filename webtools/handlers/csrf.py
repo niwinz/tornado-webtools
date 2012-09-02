@@ -8,6 +8,8 @@ class CsrfMixin(object):
     current_csrf_token = None
 
     def prepare(self):
+        super(CsrfMixin, self).prepare()
+
         if not self.enforce_csrf_check:
             return
 

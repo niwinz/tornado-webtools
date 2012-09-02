@@ -62,6 +62,8 @@ class Settings(BaseSettings, metaclass=MetaSettings):
     TORNADO_WSGI_MODE = False
     TORNADO_SETTINGS = {}
 
+    INSTALLED_MODULES = []
+
     # Secret key for cookies and password salt generation.
     SECRET_KEY = "sectet-key-change-me"
 
@@ -80,6 +82,14 @@ class Settings(BaseSettings, metaclass=MetaSettings):
     MODELS_MODULES = []
 
     CSRF_COOKIE_NAME = "csrftoken"
+
+    # I18n settings
+    I18N = False
+    I18N_DIRECTORY = None
+    I18N_DOMAIN = "webtools"
+    I18N_DEFAULT_LANG = "en_US"
+
+    DEFAULT_TZ = "UTC"
 
 
 __all__ = ['Settings']

@@ -11,6 +11,9 @@ class TestOverwriteSettings(Settings):
     JINJA2_TEMPLATE_DIRS = [
         os.path.join(CURRENT_PATH, "template")
     ]
+    INSTALLED_MODULES = [
+        "tests",
+    ]
 
     COMMANDS = [
         "webtools.management.commands.runserver.RunserverCommand",

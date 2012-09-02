@@ -2,6 +2,7 @@
 
 import tornado.web
 import copy
+import importlib
 
 from .utils.imp import load_class
 
@@ -51,6 +52,8 @@ class Application(tornado.web.Application):
         self._setup_database_engine()
         self._setup_session_engine()
         self._setup_authentication_engine()
+        self._setup_template_loaders()
+        self._setup_installed_modules()
         self._setup_template_engine()
 
         set_app(self)
@@ -73,34 +76,77 @@ class Application(tornado.web.Application):
         self.engine = create_engine(engine_url, **engine_kwargs)
         self.db = scoped_session(sessionmaker(bind=self.engine))
 
-    def _setup_template_engine(self):
-        from jinja2 import Environment, PackageLoader, ChoiceLoader, FileSystemLoader
+    def _setup_i18n(self):
+        if self.conf.I18N:
+            if self.conf.I18N_DIRECTORY is None:
+                raise RuntimeError("I18N_DIRECTORY must be a valid directory")
 
+            from tornado import locale
+            locale.set_default_locale(self.conf.I18N_DEFAULT_LANG)
+            locale.load_gettext_translations(self.conf.I18N_DIRECTORY, self.conf.I18N_DOMAIN)
+
+    def _setup_installed_modules(self):
+        # initialize app level variables
+        from jinja2 import PackageLoader
+        self.models_modules = []
+
+        if not self.conf.INSTALLED_MODULES:
+            raise RuntimeError("INSTALLED_MODULES is mandatory setting.")
+
+        # setup module template loader
+        for module_path in self.conf.INSTALLED_MODULES:
+            print("Setup {0} module...".format(module_path))
+
+            module = None
+            try:
+                module = importlib.import_module(module_path)
+            except ImportError:
+                continue
+
+            # setup module template loader
+            self.loaders.append(PackageLoader(module_path, "templates"))
+
+            # setup jinja template additions
+            try:
+                importlib.import_module(module_path + ".jinja2_addons")
+            except ImportError:
+                pass
+
+            # try import models
+            try:
+                models_mod = importlib.import_module(module_path + ".models")
+                self.models_modules.append(models_mod)
+            except ImportError:
+                pass
+
+    def _setup_template_loaders(self):
+        """
+        Initialize loaders variable and add fixed
+        user defined template dirs with FileSystemLoader.
+        """
+
+        from jinja2 import FileSystemLoader
         template_dirs = self.conf.JINJA2_TEMPLATE_DIRS
         if template_dirs is None:
             raise RuntimeError("Missing `JINJA2_TEMPLATE_DIRS` setting")
 
-        loaders = []
+        self.loaders = []
         for params in template_dirs:
             if isinstance(params, str):
-                loaders.append(FileSystemLoader(params))
+                self.loaders.append(FileSystemLoader(params))
                 continue
-
-            elif isinstance(params, (tuple, list, set)):
-                if len(params) == 2:
-                    loaders.append(PackageLoader(*params))
-                    continue
 
             raise RuntimeError("Invalid JINJA2_TEMPLATE_DIRS variable on settings")
 
-        self.jinja_env = Environment(loader=ChoiceLoader(loaders),
+    def _setup_template_engine(self):
+        from jinja2 import Environment, ChoiceLoader
+
+        self.jinja_env = Environment(loader=ChoiceLoader(self.loaders),
             **self.conf.JINJA2_SETTINGS)
 
         # load context processors
         context_processors = self.conf.JINJA2_CONTEXT_PROCESSORS or []
         self.context_processors = [load_class(x) for x in context_processors]
-
-    # Session methods
 
     def _setup_session_engine(self):
         if not self.conf.SESSION_ENGINE:
@@ -108,8 +154,6 @@ class Application(tornado.web.Application):
 
         klass = load_class(self.conf.SESSION_ENGINE)
         self.session_engine = klass(self, **self.conf.SESSION_ENGINE_KWARGS)
-
-    # Authentication methods
 
     def _setup_authentication_engine(self):
         if not self.conf.AUTHENTICATION_BACKENDS:

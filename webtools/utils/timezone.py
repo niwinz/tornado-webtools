@@ -1,56 +1,44 @@
 from datetime import datetime, timedelta, tzinfo
-from threading import local
 import pytz
 
 utc = pytz.utc
 
-_active = local()
 _localtime = None
 
-def set_default_timezone_name(tzname):
-    _active.default_timezone_name = tzname
+def get_default_timezone_name(application=None):
+    if application is None:
+        from webtools.application import get_app
+        application = get_app()
+    return application.conf.TZ
 
-def get_default_timezone_name():
-    return _active.default_timezone_name
 
-def get_default_timezone():
+def get_default_timezone(application):
     global _localtime
 
     if _localtime is None:
-        default_tzname = get_default_timezone_name()
+        default_tzname = get_default_timezone_name(application)
         _localtime = pytz.timezone(default_tzname)
 
     return _localtime
 
-def get_timezone_name(timezone):
-    return timezone.zone
 
-def get_current_timezone():
-    return getattr(_active, "value", get_default_timezone())
-
-def get_current_timezone_name():
-    return get_timezone_name(get_current_timezone())
-
-def activate(timezone):
-    if isinstance(timezone, tzinfo):
-        _active.value = timezone
-    elif isinstance(timezone, str):
-        _active.value = pytz.timezone(timezone)
-    else:
-        raise ValueError("Invalid timezone: {0}".format(timezone))
-
-def deactivate():
-    if hasattr(_active, "value"):
-        del _active.value
+#def activate(handler, timezone):
+#    if isinstance(timezone, tzinfo):
+#        _active.value = timezone
+#    elif isinstance(timezone, str):
+#        _active.value = pytz.timezone(timezone)
+#    else:
+#        raise ValueError("Invalid timezone: {0}".format(timezone))
 
 
-def as_localtime(value, timezone=None):
-    if timezone is None:
-        timezone = get_current_timezone()
-
+def as_localtime(value, timezone):
     value = value.astimezone(timezone)
     value = timezone.normalize(value)
     return value
+
+
+def get_timezone(name):
+    return pytz.timezone(name)
 
 
 now = lambda: datetime.utcnow().replace(tzinfo=utc)
