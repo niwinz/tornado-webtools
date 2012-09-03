@@ -8,7 +8,7 @@ from webtools.utils import timezone
 from .base import BaseSessionEngine
 
 
-session = Table("session", Base.metadata,
+session = Table("webtools_session", Base.metadata,
     Column("id", Integer, primary_key=True, autoincrement=False),
     Column("last_modify", DateTime(timezone=True), index=True),
     Column("key", Unicode(length=100), unique=True, index=True),

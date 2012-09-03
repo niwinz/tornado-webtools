@@ -67,6 +67,8 @@ class CommandManager(object):
         "webtools.management.commands.help.HelpCommand",
         "webtools.management.commands.runserver.RunserverCommand",
         "webtools.management.commands.syncdb.SyncdbCommand",
+        "webtools.management.commands.syncdb.DropdbCommand",
+        "webtools.management.commands.shell.ShellCommand",
     ]
 
     def __init__(self, app):
@@ -217,9 +219,11 @@ class CommandApp(object):
         """
         Load a main tornado application.
         """
-
         if settings_path is None:
-            return None
+            if "WEBTOOLS_SETTINGS" not in os.environ:
+                return None
+
+            settings_path = os.environ["WEBTOOLS_SETTINGS"]
 
         try:
             settings_cls = load_class(settings_path)

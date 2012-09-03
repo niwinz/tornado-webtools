@@ -77,10 +77,6 @@ class Settings(BaseSettings, metaclass=MetaSettings):
         'webtools.auth.hashers.CryptPasswordHasher',
     )
 
-    # List of modules of models. Explicit definition for
-    # correct loading all models on run syncdb command.
-    MODELS_MODULES = []
-
     CSRF_COOKIE_NAME = "csrftoken"
 
     # I18n settings
@@ -90,6 +86,9 @@ class Settings(BaseSettings, metaclass=MetaSettings):
     I18N_DEFAULT_LANG = "en_US"
 
     DEFAULT_TZ = "UTC"
+
+    # User defined commands.
+    COMMANDS = []
 
 
 __all__ = ['Settings']
