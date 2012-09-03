@@ -15,24 +15,20 @@ class SyncdbCommand(Command):
         if not options.settings:
             raise RuntimeError("For start serverm --settings parameter"
                                 " is mandatory!")
-        try:
-            settings_cls = load_class(options.settings)
-        except ImportError:
-            raise RuntimeError("Cannot load settings class: {0}".format(options.settings))
-
-        conf = settings_cls()
-
-        models_modules = conf.MODELS_MODULES or []
-        assert isinstance(models_modules, (list, tuple)), "MODELS_MODULES must be a list or tuple"
-
-        for module_path in set(models_modules):
-            try:
-                import_module(module_path)
-            except ImportError:
-                continue
 
         from webtools.application import Application
-        app = Application(conf)
+        app = Application(self.cmdapp.conf)
 
-        print("Creating tables...")
-        Base.metadata.create_all(app.engine)
+        print("Create theese tables:")
+        for tbl in Base.metadata.sorted_tables:
+            print(" * {0}".format(tbl.name))
+
+        res = input("Create [Y/n] ")
+        if not res or res.lower() == "y":
+            res = True
+        else:
+            res = False
+
+
+        if res:
+            Base.metadata.create_all(app.engine)
