@@ -5,6 +5,8 @@ import copy
 import importlib
 
 from .utils.imp import load_class
+from .template.base import Library
+
 
 _global_app = None
 
@@ -118,6 +120,9 @@ class Application(tornado.web.Application):
                 self.models_modules.append(models_mod)
             except ImportError:
                 pass
+
+        if Library._instance:
+            Library._instance._update_env(self.jinja_env)
 
     def _setup_template_loaders(self):
         """

@@ -11,10 +11,10 @@ class Library(object):
         self._tests = {}
         self._filters = {}
 
-    def _update_app(self, app):
-        app.filters.update(self._filters)
-        app.globals.update(self._globals)
-        app.tests.update(self._tests)
+    def _update_env(self, env):
+        env.filters.update(self._filters)
+        env.globals.update(self._globals)
+        env.tests.update(self._tests)
 
     def _new_function(self, attr, func, name=None):
         _attr = getattr(self, attr)
