@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+import os.path
+import sys; sys.path.insert(0, "/home/niwi/tornado-webtools")
+
+from webtools.management.base import main; main()
