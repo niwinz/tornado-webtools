@@ -55,8 +55,8 @@ class Application(tornado.web.Application):
         self._setup_session_engine()
         self._setup_authentication_engine()
         self._setup_template_loaders()
-        self._setup_installed_modules()
         self._setup_template_engine()
+        self._setup_installed_modules()
 
         set_app(self)
 
@@ -151,7 +151,10 @@ class Application(tornado.web.Application):
 
         # load context processors
         context_processors = self.conf.JINJA2_CONTEXT_PROCESSORS or []
-        self.context_processors = [load_class(x) for x in context_processors]
+        self.context_processors = [load_class(x) for x in set(context_processors)]
+
+        # load defautl builtin tags
+        self.jinja_env.globals["_"] = load_class("webtools.template.default_extensions.ugettext")
 
     def _setup_session_engine(self):
         if not self.conf.SESSION_ENGINE:
@@ -171,7 +174,6 @@ class Application(tornado.web.Application):
         if self.session_engine is None:
             raise RuntimeError("Auth subsystem works only with session")
 
-        # Add auth context processor to global list
         self.conf.JINJA2_CONTEXT_PROCESSORS.append("webtools.auth.context_processors.auth")
 
     def _authenticate(self, username=None, password=None):

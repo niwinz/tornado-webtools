@@ -20,7 +20,13 @@ class ResponseHandlerMixin(object):
         ctx = {}
         ctx.update(context)
 
-        for ctx_processor in self.context_processors:
+        for ctx_processor in self.application.context_processors:
             ctx.update(ctx_processor(self))
+
+        ctx.update({
+            "handler": self,
+            "application": self.application.conf,
+            "config": self.application.conf,
+        })
 
         return ctx
