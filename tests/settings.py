@@ -18,3 +18,9 @@ class TestOverwriteSettings(Settings):
     COMMANDS = [
         "webtools.management.commands.runserver.RunserverCommand",
     ]
+
+    I18N = True
+
+    I18N_DIRECTORIES = [
+        os.path.join(CURRENT_PATH, "locale"),
+    ]

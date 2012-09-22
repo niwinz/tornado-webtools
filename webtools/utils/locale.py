@@ -33,12 +33,20 @@ def _load_translation(directory, domain):
             t_locale._translations[lang] = gettext_translations
 
 
+
 def load_gettext_translations(directories, domain):
-    assert isinstance(directories, (tuple, list)), "directories must be a list or tuple"
+    assert isinstance(directories, (tuple, list, set, frozenset)), "directories must be a list or tuple"
 
     t_locale._translations = {}
+    t_locale._use_gettext = True
     for directory in set(directories):
         if not os.path.exists(directory):
             continue
 
         _load_translation(directory, domain)
+
+    t_locale._supported_locales = frozenset(t_locale._translations.keys())
+
+
+def set_default_locale(*args, **kwargs):
+    return t_locale.set_default_locale(*args, **kwargs)

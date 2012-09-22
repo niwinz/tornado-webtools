@@ -1,0 +1,2 @@
+msgid "privet"
+msgstr "hello"

@@ -87,3 +87,33 @@ class TimezoneModuleTest(unittest.TestCase):
         dt = timezone.make_naive(dt, pytz.timezone("Europe/Madrid"))
 
         self.assertTrue(timezone.is_naive(dt))
+
+
+class TranslationTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from webtools.application import Application
+        cls.app = Application(TestOverwriteSettings())
+        Base.metadata.create_all(cls.app.engine)
+
+    def setUp(self):
+        self.handler = ResponseMock()
+        self.handler.application = self.app
+
+    def tearDown(self):
+        self.handler.session.flush()
+
+    def test_template_translation(self):
+        self.handler.activate_locale("en-US")
+        template = self.handler.get_template_from_string("{{ _('privet') }}")
+        result = self.handler.render_to_string(template)
+
+        self.assertEqual(result, "hello")
+
+        self.handler.activate_locale("es")
+        template = self.handler.get_template_from_string("{{ _('privet') }}")
+        result = self.handler.render_to_string(template)
+
+        self.assertEqual(result, "hola")
+
+

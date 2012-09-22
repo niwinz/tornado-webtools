@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import tornado.web
-import copy
 import importlib
+import copy
+import os
 
 from .utils.imp import load_class
 from .template.base import Library
@@ -56,6 +57,7 @@ class Application(tornado.web.Application):
         self._setup_authentication_engine()
         self._setup_template_loaders()
         self._setup_template_engine()
+        self._setup_i18n()
         self._setup_installed_modules()
 
         set_app(self)
@@ -79,16 +81,22 @@ class Application(tornado.web.Application):
         self.db = scoped_session(sessionmaker(bind=self.engine))
 
     def _setup_i18n(self):
-        if self.conf.I18N:
-            if self.conf.I18N_DIRECTORY is None:
-                raise RuntimeError("I18N_DIRECTORY must be a valid directory")
+        if not self.conf.I18N:
+            return
 
-            from tornado import locale
-            locale.set_default_locale(self.conf.I18N_DEFAULT_LANG)
-            locale.load_gettext_translations(self.conf.I18N_DIRECTORY, self.conf.I18N_DOMAIN)
+        if self.conf.I18N_DIRECTORIES is None:
+            raise RuntimeError("I18N_DIRECTORIES must be a valid directory")
+
+        pwd = os.path.dirname(os.path.realpath(__file__))
+        pwd_locale = os.path.join(pwd, "locale")
+        if os.path.exists(pwd_locale):
+            self.conf.I18N_DIRECTORIES.append(pwd_locale)
+
+        from webtools.utils import locale
+        locale.set_default_locale(self.conf.I18N_DEFAULT_LANG)
+        locale.load_gettext_translations(frozenset(self.conf.I18N_DIRECTORIES), self.conf.I18N_DOMAIN)
 
     def _setup_installed_modules(self):
-        # initialize app level variables
         from jinja2 import PackageLoader
         self.models_modules = []
 

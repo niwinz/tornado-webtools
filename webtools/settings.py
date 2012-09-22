@@ -81,7 +81,7 @@ class Settings(BaseSettings, metaclass=MetaSettings):
 
     # I18n settings
     I18N = False
-    I18N_DIRECTORY = None
+    I18N_DIRECTORIES = []
     I18N_DOMAIN = "webtools"
     I18N_DEFAULT_LANG = "en_US"
 
