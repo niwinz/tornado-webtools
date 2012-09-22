@@ -44,7 +44,7 @@ class Library(object):
 
         raise RuntimeError("Invalid parameters")
 
-    def global(self, *args, **kwargs):
+    def global_function(self, *args, **kwargs):
         return self._function("_globals", *args, **kwargs)
 
     def test(self, *args, **kwargs):

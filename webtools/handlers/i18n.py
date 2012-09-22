@@ -20,12 +20,12 @@ class I18nMixin(object):
     def _(self, message, plural_message=None, count=None):
         self.locale.translate(message, plural_message=plural_message, count=count)
 
-    def activate_locale(self, locale):
+    def activate_locale(self, locale_name):
         """
         Activate a specific locale for current user.
         """
-        self.session["webtools_locale"] = locale
-        self._locale = locale.get(locale)
+        self.session["webtools_locale"] = locale_name
+        self._locale = locale.get(locale_name)
 
 
 class TimezoneMixin(object):
@@ -38,7 +38,7 @@ class TimezoneMixin(object):
     def get_user_timezone(self):
         if "webtools_timezone" in self.session:
             return get_timezone(self.session["webtools_timezone"])
-        return get_timezone(self.conf.DEFAULT_TZ)
+        return get_timezone(self.application.conf.DEFAULT_TZ)
 
     def activate_timezone(self, timezone_name):
         self.session["webtools_timezone"] = timezone_name
