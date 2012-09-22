@@ -22,15 +22,6 @@ def get_default_timezone(application):
     return _localtime
 
 
-#def activate(handler, timezone):
-#    if isinstance(timezone, tzinfo):
-#        _active.value = timezone
-#    elif isinstance(timezone, str):
-#        _active.value = pytz.timezone(timezone)
-#    else:
-#        raise ValueError("Invalid timezone: {0}".format(timezone))
-
-
 def as_localtime(value, timezone):
     value = value.astimezone(timezone)
     value = timezone.normalize(value)
