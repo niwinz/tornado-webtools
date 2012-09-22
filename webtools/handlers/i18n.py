@@ -18,7 +18,7 @@ class I18nMixin(object):
         return None
 
     def _(self, message, plural_message=None, count=None):
-        self.locale.translate(message, plural_message=plural_message, count=count)
+        return self.locale.translate(message, plural_message=plural_message, count=count)
 
     def activate_locale(self, locale_name):
         """

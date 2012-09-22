@@ -116,4 +116,9 @@ class TranslationTest(TestCase):
 
         self.assertEqual(result, "hola")
 
+    def test_handler_translations(self):
+        self.handler.activate_locale("en-US")
+        self.assertEqual(self.handler._("privet"), "hello")
 
+        self.handler.activate_locale("es")
+        self.assertEqual(self.handler._("privet"), "hola")
